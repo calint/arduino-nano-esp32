@@ -4,7 +4,8 @@
 #include <Preferences.h>
 #include <WiFi.h>
 
-#include "secrets.h" // defines WiFi login info 'secret_wifi_network' and 'secret_wifi_password'
+// define WiFi login info 'secret_wifi_network' and 'secret_wifi_password'
+#include "secrets.h"
 
 constexpr const char *url_time_server = "http://worldtimeapi.org/api/ip";
 constexpr const char *url_astros = "http://api.open-notify.org/astros.json";
@@ -14,16 +15,18 @@ constexpr const char *url_jokes = "https://v2.jokeapi.dev/joke/Programming";
 TaskHandle_t task1;
 auto loop1() -> void;
 auto func1(void *vpParameter) -> void {
-  while (true)
+  while (true) {
     loop1();
+  }
 }
 
 // task 2 on second core
 TaskHandle_t task2;
 auto loop2() -> void;
 auto func2(void *vpParameter) -> void {
-  while (true)
+  while (true) {
     loop2();
+  }
 }
 
 WiFiServer web_server(80);
@@ -52,8 +55,9 @@ auto lookup_wifi_status_to_cstr(wl_status_t const status) -> const char * {
 }
 
 auto connect_to_wifi_if_disconnected() -> bool {
-  if (WiFi.status() == WL_CONNECTED)
+  if (WiFi.status() == WL_CONNECTED) {
     return true;
+  }
 
   Serial.printf("\nconnecting to '%s' with '%s'\n", secret_wifi_network,
                 secret_wifi_password);
@@ -89,8 +93,10 @@ auto setup() -> void {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
   Serial.begin(115200);
-  while (!Serial && millis() < 10000)
-    delay(100); // wait max 10 seconds for serial over usb
+  // wait max 10 seconds for serial over usb
+  while (!Serial && millis() < 10000) {
+    delay(100);
+  }
 
   connect_to_wifi_if_disconnected();
 
@@ -161,10 +167,10 @@ auto read_url_to_json_doc(const char *url, JsonDocument &json_doc) -> bool {
 
 auto print_astronauts_in_space_right_now(Stream &os) -> void {
   digitalWrite(LED_BUILTIN, LOW);
-  // DynamicJsonDocument json_doc(8 * 1024);
-  JsonDocument json_doc; // memory allocated on the stack
-  if (!read_url_to_json_doc(url_astros, json_doc))
+  JsonDocument json_doc;
+  if (!read_url_to_json_doc(url_astros, json_doc)) {
     return;
+  }
   digitalWrite(LED_BUILTIN, HIGH);
   auto const people = json_doc["people"].as<JsonArrayConst>();
   for (auto const p : people) {
@@ -176,9 +182,10 @@ auto print_astronauts_in_space_right_now(Stream &os) -> void {
 
 auto print_current_time_based_on_ip(Stream &os) -> void {
   digitalWrite(LED_BUILTIN, LOW);
-  JsonDocument json_doc; // memory allocated on the stack
-  if (!read_url_to_json_doc(url_time_server, json_doc))
+  JsonDocument json_doc;
+  if (!read_url_to_json_doc(url_time_server, json_doc)) {
     return;
+  }
   digitalWrite(LED_BUILTIN, HIGH);
   auto const date_time_raw = json_doc["datetime"].as<String>();
   //  "2023-08-31T16:32:47.653086+02:00" to "2023-08-31 16:32:47"
@@ -189,9 +196,10 @@ auto print_current_time_based_on_ip(Stream &os) -> void {
 
 auto print_random_programming_joke(Stream &os) -> void {
   digitalWrite(LED_BUILTIN, LOW);
-  JsonDocument json_doc; // memory allocated on the stack
-  if (!read_url_to_json_doc(url_jokes, json_doc))
+  JsonDocument json_doc;
+  if (!read_url_to_json_doc(url_jokes, json_doc)) {
     return;
+  }
   digitalWrite(LED_BUILTIN, HIGH);
   if (json_doc["type"].as<String>() == "single") {
     os.println(json_doc["joke"].as<const char *>());
@@ -203,11 +211,12 @@ auto print_random_programming_joke(Stream &os) -> void {
 
 auto print_current_time_from_ntp(Stream &os) -> void {
   WiFiUDP ntp_udp;
-  NTPClient ntp_client(
-      ntp_udp); // default 'pool.ntp.org', 60 seconds update interval, no offset
+  // default 'pool.ntp.org', 60 seconds update interval, no offset
+  NTPClient ntp_client(ntp_udp);
   digitalWrite(LED_BUILTIN, LOW);
-  if (!ntp_client.update())
+  if (!ntp_client.update()) {
     os.println("!!! failed to update ntp client");
+  }
   digitalWrite(LED_BUILTIN, HIGH);
   os.println(ntp_client.getFormattedTime());
 }
@@ -327,18 +336,21 @@ auto handle_web_server_rgbled(String const &path, String const &query,
   os.print("<form>RGB Led: ");
 
   os.print("<input type=checkbox name=r value=1 ");
-  if (r)
+  if (r) {
     os.print("checked");
+  }
   os.print("> red ");
 
   os.print("<input type=checkbox name=g value=1 ");
-  if (g)
+  if (g) {
     os.print("checked");
+  }
   os.print("> green ");
 
   os.print("<input type=checkbox name=b value=1 ");
-  if (b)
+  if (b) {
     os.print("checked");
+  }
   os.print("> blue ");
 
   os.print("<input type=submit value=apply>");
@@ -348,9 +360,9 @@ auto handle_web_server_rgbled(String const &path, String const &query,
 // returns true if a request was serviced or false if no client available
 auto handle_web_server() -> bool {
   auto client = web_server.available();
-  if (!client)
+  if (!client) {
     return false;
-
+  }
   // read first request line
   auto const method = client.readStringUntil(' ');
   auto const uri = client.readStringUntil(' ');
@@ -375,8 +387,9 @@ auto handle_web_server() -> bool {
       Serial.println("!!! malformed http request");
       return false;
     }
-    if (line.length() == 0)
+    if (line.length() == 0) {
       break;
+    }
     headers.push_back(line);
   }
 
